@@ -10,14 +10,14 @@ api_key = os.environ.get('GOOGLE_MAPS_PASS')
 
 #Read the excel where I have info about the stores
 df = pd.read_excel('Husqvarna_stores.xlsx')
-df["full"] = df["NOMBRE"] + " C.P " + df["CODIGO"].astype(str)
+df["full"] = df["NOMBRE"] + " postal code " + df["CODIGO"].astype(str)
 values = [x for x in df['full']]
 
 #Iterate over the address and save the lat and long in the dict lat_long
 for x in values:
     data_type = 'json'
     endpoint = f"https://maps.googleapis.com/maps/api/geocode/{data_type}"
-    params = {"address": x, "key": api_key}
+    params = {"address": x, "region": "es", "key": api_key}
 
     url_params = urlencode(params)
 
@@ -25,13 +25,13 @@ for x in values:
     r = requests.get(url)
     if r.status_code not in range(200, 299):
         print('Not found')
-    #Set a flag to catch errors
+    # Set a flag to catch errors
     try:
-        lat_long[x] = r.json()['results'][0]['geometry']['location']
+        lat_long[x] = r.json()['results'][0]['geometry']['location']['lat'], r.json()['results'][0]['geometry']['location']['lng']
     except:
         lat_long[x] = {'error': x}
         continue
 
-#Save the results into a new excel
-df = pd.DataFrame(list(lat_long.items()),columns = ['Name','Lat y long'])
+df = pd.DataFrame(list(lat_long.items()), columns=['Adress', 'Lat & Long'])
+
 df.to_excel('Husqvarna_coordinates.xlsx', encoding="utf_8_sig", index=False)
